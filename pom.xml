@@ -28,6 +28,7 @@
 		<module>cert-processor</module>
 		<module>post-certificate-processor</module>
         <module>certificate-pre-processor</module>
+		<module>video-stream-generator</module>
     </modules>
 
 	<properties>
