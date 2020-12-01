@@ -116,7 +116,7 @@ class VideoStreamService(implicit config: VideoStreamGeneratorConfig) {
   private def updatePreviewUrl(contentId: String, streamingUrl: String, channel: String): Boolean = {
     if(!streamingUrl.isEmpty && !contentId.isEmpty) {
       val requestBody = "{\"request\": {\"content\": {\"streamingUrl\":\""+ streamingUrl +"\"}}}"
-      val url = config.lpURL + "/system/v3/content/update/" + contentId
+      val url = config.lpURL + config.contentV3Update + contentId
       val headers = HashMap[String, String]("X-Channel-Id" -> channel)
       val response:MediaResponse = HttpRestUtil.put(url, headers, requestBody)
 

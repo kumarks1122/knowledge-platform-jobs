@@ -5,6 +5,7 @@ import java.util
 import com.typesafe.config.Config
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
+import org.apache.flink.streaming.api.scala.OutputTag
 import org.sunbird.job.BaseJobConfig
 import org.sunbird.job.exception.MediaServiceException
 
@@ -18,6 +19,8 @@ class VideoStreamGeneratorConfig(override val config: Config) extends BaseJobCon
   // Kafka Topics Configuration
   val kafkaInputTopic: String = config.getString("kafka.input.topic")
   override val kafkaConsumerParallelism: Int = config.getInt("task.consumer.parallelism")
+
+  val windowTime = config.getInt("task.window.time")
 
   // Metric List
   val totalEventsCount = "total-events-count"
@@ -34,6 +37,11 @@ class VideoStreamGeneratorConfig(override val config: Config) extends BaseJobCon
 
   // Consumers
   val videoStreamConsumer = "video-stream-generator-consumer"
+  val videoStreamUrlUpdatorConsumer = "video-stream-url-updator-consumer"
+
+  // Tags
+  val videoStreamJobStatusTagName = "video-stream-job-status"
+  val videoStreamJobOutput: OutputTag[String] = OutputTag[String](videoStreamJobStatusTagName)
 
   // Cassandra Configurations
   val dbTable: String = config.getString("lms-cassandra.table")
@@ -48,6 +56,7 @@ class VideoStreamGeneratorConfig(override val config: Config) extends BaseJobCon
 
   // LP Configurations
   val lpURL: String = config.getString("lp.url")
+  val contentV3Update = "/content/v3/update/"
 
   def getConfig(key: String): String = {
     if (config.hasPath(key))

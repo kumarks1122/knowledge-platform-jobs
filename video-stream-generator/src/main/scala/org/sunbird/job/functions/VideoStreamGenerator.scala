@@ -9,23 +9,18 @@ import org.apache.commons.lang3.StringUtils
 import org.json4s.jackson.JsonMethods.parse
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
-import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction
-import org.apache.flink.streaming.api.windowing.windows.TimeWindow
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Json
+import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.slf4j.LoggerFactory
-//import org.sunbird.job.cache.{DataCache, RedisConnect}
 import org.sunbird.job.service.VideoStreamService
 import org.sunbird.job.task.VideoStreamGeneratorConfig
-import org.sunbird.job.{Metrics, WindowBaseProcessFunction}
+import org.sunbird.job.{BaseProcessFunction, Metrics}
 
 import scala.collection.JavaConverters._
 
-
 class VideoStreamGenerator(config: VideoStreamGeneratorConfig)
-                          (implicit val mapTypeInfo: TypeInformation[util.Map[String, AnyRef]])
-                          extends WindowBaseProcessFunction[util.Map[String, AnyRef], String, String](config) {
-
+                          (implicit val mapTypeInfo: TypeInformation[util.Map[String, AnyRef]],
+                           implicit val stringTypeInfo: TypeInformation[String])
+                          extends BaseProcessFunction[util.Map[String, AnyRef], String](config) {
 
     implicit lazy val videoStreamConfig: VideoStreamGeneratorConfig = config
     private[this] lazy val logger = LoggerFactory.getLogger(classOf[VideoStreamGenerator])
@@ -45,15 +40,14 @@ class VideoStreamGenerator(config: VideoStreamGeneratorConfig)
         super.close()
     }
 
-    override def process(key: String, context: ProcessWindowFunction[util.Map[String, AnyRef], String, String, TimeWindow]#Context, events: lang.Iterable[util.Map[String, AnyRef]], metrics: Metrics): Unit = {
-        val gson = new Gson()
-        events.asScala.foreach { event =>
-            logger.info("Event eid:: "+ event.get("eid"))
-            val eventData = parse(gson.toJson(event)).values.asInstanceOf[Map[String, AnyRef]]
-            if(isValidEvent(eventData("edata").asInstanceOf[Map[String, AnyRef]])) {
-                logger.info("Event eid:: valid event")
-                videoStreamService.submitJobRequest(eventData)
-            }
+    override def processElement(event: util.Map[String, AnyRef],
+                         context: ProcessFunction[util.Map[String, AnyRef], String]#Context,
+                         metrics: Metrics): Unit = {
+        logger.info("Event eid:: "+ event.get("eid"))
+        if(isValidEvent(event.get("edata").asInstanceOf[Map[String, AnyRef]])) {
+            logger.info("Event eid:: valid event")
+            videoStreamService.submitJobRequest(event.asScala.toMap)
+            context.output(config.videoStreamJobOutput, "processed")
         }
     }
 
