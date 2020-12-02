@@ -12,7 +12,7 @@ import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow
 import org.sunbird.job.connector.FlinkKafkaConnector
-import org.sunbird.job.functions.{VideoStreamGenerator, VideoStreamGeneratorTrigger, VideoStreamUrlUpdator}
+import org.sunbird.job.functions.{VideoStreamGenerator, VideoStreamUrlUpdator}
 import org.sunbird.job.util.FlinkUtil
 
 
@@ -26,13 +26,12 @@ class VideoStreamGeneratorStreamTask(config: VideoStreamGeneratorConfig, kafkaCo
       .uid(config.videoStreamConsumer).setParallelism(config.kafkaConsumerParallelism)
       .rebalance
       .process(new VideoStreamGenerator(config))
+      .getSideOutput(config.videoStreamJobOutput)
       .keyBy(x => x)
       .timeWindow(Time.seconds(config.windowTime))
       .process(new VideoStreamUrlUpdator(config))
       .uid(config.videoStreamUrlUpdatorConsumer)
       .setParallelism(config.kafkaConsumerParallelism)
-//      .trigger(new VideoStreamGeneratorTrigger[TimeWindow](1, env.getStreamTimeCharacteristic)(config: VideoStreamGeneratorConfig))
-      .name("video-stream-generator")
 
     env.execute(config.jobName)
   }
