@@ -44,9 +44,10 @@ class VideoStreamGenerator(config: VideoStreamGeneratorConfig)
                          context: ProcessFunction[util.Map[String, AnyRef], String]#Context,
                          metrics: Metrics): Unit = {
         logger.info("Event eid:: "+ event.get("eid"))
-        if(isValidEvent(event.get("edata").asInstanceOf[Map[String, AnyRef]])) {
+        val eData = event.get("edata").asInstanceOf[util.Map[String, AnyRef]].asScala.toMap
+        if(isValidEvent(eData)) {
             logger.info("Event eid:: valid event")
-            videoStreamService.submitJobRequest(event.asScala.toMap)
+            videoStreamService.submitJobRequest(eData)
             context.output(config.videoStreamJobOutput, "processed")
         }
     }

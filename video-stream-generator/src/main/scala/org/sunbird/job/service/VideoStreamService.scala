@@ -29,9 +29,8 @@ class VideoStreamService(implicit config: VideoStreamGeneratorConfig) {
   private lazy val VIDEO_STREAMING:String = "VIDEO_STREAMING"
 
 
-  def submitJobRequest(eventData: Map[String, AnyRef]): Unit = {
+  def submitJobRequest(eData: Map[String, AnyRef]): Unit = {
     val stageName = "STREAMING_JOB_SUBMISSION";
-    val eData:Map[String, AnyRef] = eventData.get("edata").get.asInstanceOf[Map[String, AnyRef]]
     val jobSubmitted = DateTime.now()
     val requestId = UUID.randomUUID().toString
     val jobRequest = JobRequest(clientKey, requestId, None, SUBMITTED, Json(DefaultFormats).write(eData), 0, Option(jobSubmitted),
@@ -152,7 +151,7 @@ class VideoStreamService(implicit config: VideoStreamGeneratorConfig) {
       }
     })
 
-    selectWhere.orderBy(QueryBuilder.asc("dt_job_submitted"))
+//    selectWhere.orderBy(QueryBuilder.asc("dt_job_submitted"))
 
     val result = cassandraUtil.find(selectWhere.toString).asScala.toList.map { jr =>
       JobRequest(jr.getString("client_key"), jr.getString("request_id"), Option(jr.getString("job_id")), jr.getString("status"), jr.getString("request_data"), jr.getInt("iteration"), stage=Option(jr.getString("stage")), stage_status=Option(jr.getString("stage_status")),job_name=Option(jr.getString("job_name")))
